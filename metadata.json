@@ -1,0 +1,8 @@
+{
+  "name": "Marzban VPN Admin & Auth Backend",
+  "description": "Admin dashboard and authentication backend service for Marzban VPN user and device management",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
