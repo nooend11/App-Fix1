@@ -1,5 +1,21 @@
 import axios from "axios";
+import https from "https";
 import { store } from "./store.js";
+
+// Allow requests to Marzban servers with self-signed or custom SSL certs
+const httpsAgent = new https.Agent({ rejectUnauthorized: false });
+
+function getNormalizedBaseUrl(rawUrl: string): string {
+  if (!rawUrl) return "https://v2.nooend.me:8000";
+  let url = rawUrl.trim();
+  // Strip trailing dashboard paths
+  url = url.replace(/\/dashboard\/.*$/, "");
+  url = url.replace(/\/+$/, "");
+  if (!url.startsWith("http://") && !url.startsWith("https://")) {
+    url = `https://${url}`;
+  }
+  return url;
+}
 
 // Mock database of Marzban Users for offline/development testing
 const mockMarzbanUsers: Record<string, any> = {
@@ -50,13 +66,15 @@ async function getMarzbanToken(): Promise<string> {
     return cachedToken.token;
   }
 
+  const baseUrl = getNormalizedBaseUrl(config.baseUrl);
   const formData = new URLSearchParams();
   formData.append("username", config.username);
   formData.append("password", config.password);
 
-  const res = await axios.post(`${config.baseUrl}/api/admin/token`, formData, {
+  const res = await axios.post(`${baseUrl}/api/admin/token`, formData, {
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    timeout: 5000,
+    httpsAgent,
+    timeout: 8000,
   });
 
   const token = res.data.access_token;
@@ -76,10 +94,12 @@ export const marzbanService = {
     }
 
     try {
+      const baseUrl = getNormalizedBaseUrl(config.baseUrl);
       const token = await getMarzbanToken();
-      const res = await axios.get(`${config.baseUrl}/api/users`, {
+      const res = await axios.get(`${baseUrl}/api/users`, {
         headers: { Authorization: `Bearer ${token}` },
-        timeout: 5000,
+        httpsAgent,
+        timeout: 8000,
       });
       return res.data;
     } catch (err: any) {
@@ -91,7 +111,7 @@ export const marzbanService = {
 
   async getUser(username: string): Promise<any> {
     const config = store.getConfig();
-    if (config.isMock || mockMarzbanUsers[username]) {
+    if (config.isMock) {
       if (mockMarzbanUsers[username]) {
         return mockMarzbanUsers[username];
       }
@@ -99,10 +119,12 @@ export const marzbanService = {
     }
 
     try {
+      const baseUrl = getNormalizedBaseUrl(config.baseUrl);
       const token = await getMarzbanToken();
-      const res = await axios.get(`${config.baseUrl}/api/user/${username}`, {
+      const res = await axios.get(`${baseUrl}/api/user/${username}`, {
         headers: { Authorization: `Bearer ${token}` },
-        timeout: 5000,
+        httpsAgent,
+        timeout: 8000,
       });
       return res.data;
     } catch (err: any) {
@@ -144,10 +166,12 @@ export const marzbanService = {
     }
 
     try {
+      const baseUrl = getNormalizedBaseUrl(config.baseUrl);
       const token = await getMarzbanToken();
-      const res = await axios.post(`${config.baseUrl}/api/user`, payload, {
+      const res = await axios.post(`${baseUrl}/api/user`, payload, {
         headers: { Authorization: `Bearer ${token}` },
-        timeout: 5000,
+        httpsAgent,
+        timeout: 8000,
       });
       return res.data;
     } catch (err: any) {
@@ -165,7 +189,7 @@ export const marzbanService = {
     const config = store.getConfig();
     const expire = Math.floor((Date.now() + days * 86400 * 1000) / 1000);
 
-    if (config.isMock || mockMarzbanUsers[username]) {
+    if (config.isMock) {
       if (mockMarzbanUsers[username]) {
         mockMarzbanUsers[username].expire = expire;
       }
@@ -173,10 +197,12 @@ export const marzbanService = {
     }
 
     try {
+      const baseUrl = getNormalizedBaseUrl(config.baseUrl);
       const token = await getMarzbanToken();
-      await axios.put(`${config.baseUrl}/api/user/${username}`, { expire }, {
+      await axios.put(`${baseUrl}/api/user/${username}`, { expire }, {
         headers: { Authorization: `Bearer ${token}` },
-        timeout: 5000,
+        httpsAgent,
+        timeout: 8000,
       });
       return true;
     } catch (err: any) {
@@ -189,7 +215,7 @@ export const marzbanService = {
 
   async enableUser(username: string): Promise<boolean> {
     const config = store.getConfig();
-    if (config.isMock || mockMarzbanUsers[username]) {
+    if (config.isMock) {
       if (mockMarzbanUsers[username]) {
         mockMarzbanUsers[username].status = "active";
       }
@@ -197,10 +223,12 @@ export const marzbanService = {
     }
 
     try {
+      const baseUrl = getNormalizedBaseUrl(config.baseUrl);
       const token = await getMarzbanToken();
-      await axios.put(`${config.baseUrl}/api/user/${username}`, { status: "active" }, {
+      await axios.put(`${baseUrl}/api/user/${username}`, { status: "active" }, {
         headers: { Authorization: `Bearer ${token}` },
-        timeout: 5000,
+        httpsAgent,
+        timeout: 8000,
       });
       return true;
     } catch (err: any) {
@@ -213,7 +241,7 @@ export const marzbanService = {
 
   async disableUser(username: string): Promise<boolean> {
     const config = store.getConfig();
-    if (config.isMock || mockMarzbanUsers[username]) {
+    if (config.isMock) {
       if (mockMarzbanUsers[username]) {
         mockMarzbanUsers[username].status = "disabled";
       }
@@ -221,10 +249,12 @@ export const marzbanService = {
     }
 
     try {
+      const baseUrl = getNormalizedBaseUrl(config.baseUrl);
       const token = await getMarzbanToken();
-      await axios.put(`${config.baseUrl}/api/user/${username}`, { status: "disabled" }, {
+      await axios.put(`${baseUrl}/api/user/${username}`, { status: "disabled" }, {
         headers: { Authorization: `Bearer ${token}` },
-        timeout: 5000,
+        httpsAgent,
+        timeout: 8000,
       });
       return true;
     } catch (err: any) {
@@ -244,10 +274,12 @@ export const marzbanService = {
     }
 
     try {
+      const baseUrl = getNormalizedBaseUrl(config.baseUrl);
       const token = await getMarzbanToken();
-      await axios.delete(`${config.baseUrl}/api/user/${username}`, {
+      await axios.delete(`${baseUrl}/api/user/${username}`, {
         headers: { Authorization: `Bearer ${token}` },
-        timeout: 5000,
+        httpsAgent,
+        timeout: 8000,
       });
       return true;
     } catch (err: any) {
@@ -257,7 +289,7 @@ export const marzbanService = {
 
   getSubscription(username: string): string {
     const config = store.getConfig();
-    const cleanUrl = config.baseUrl.replace(/\/+$/, "");
-    return `${cleanUrl}/sub/${username}`;
+    const baseUrl = getNormalizedBaseUrl(config.baseUrl);
+    return `${baseUrl}/sub/${username}`;
   }
 };

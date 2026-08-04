@@ -69,10 +69,10 @@ const adminsStore: AdminUser[] = [
 ];
 
 let marzbanConfigStore: MarzbanConfig = {
-  baseUrl: process.env.MARZBAN_URL || "https://marzban.example.com",
-  username: process.env.MARZBAN_USERNAME || "admin",
-  password: process.env.MARZBAN_PASSWORD || "password",
-  isMock: true
+  baseUrl: process.env.MARZBAN_URL || "https://v2.nooend.me:8000",
+  username: process.env.MARZBAN_USERNAME || "152",
+  password: process.env.MARZBAN_PASSWORD || "1234",
+  isMock: false
 };
 
 export const store = {
